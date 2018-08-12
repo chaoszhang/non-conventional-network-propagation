@@ -14,7 +14,7 @@ def load_json(address):
         return json.load(f)
 
 class NLPropagation():
-    def __init__(self, values, sources, targets, nIter = 2000, gpu = True, alpha = 0.25, beta = 0.01, gamma = 1.0 / 3, shift = 1, power = 2):
+    def __init__(self, values, sources, targets, nIter = 10000, gpu = True, alpha = 0.56, beta = 0.0005, gamma = 1.0 / 3, shift = 3, power = 2):
         self.nIter = nIter
         self.alpha = alpha
         self.beta = beta
@@ -40,7 +40,7 @@ class NLPropagation():
         p = self.p
         p0 = p
         for i in range(self.nIter):
-            p = self.alpha * self.beta * p0 + (1 - self.alpha * self.beta) * (p + self.beta * ((p ** self.gamma) * torch.matmul(self.a, p ** (1 - self.gamma)) - (p ** (1 - self.gamma)) * torch.matmul(self.b, p ** self.gamma)))
+            p += self.beta * (self.alpha * (p0 - p) + (1 - self.alpha) * ((p ** self.gamma) * torch.matmul(self.a, p ** (1 - self.gamma)) - (p ** (1 - self.gamma)) * torch.matmul(self.b, p ** self.gamma)))
             print(p, sum(p.t().cpu().numpy().tolist()[0]))
         return p.t().cpu().numpy().tolist()[0]
     
@@ -48,5 +48,5 @@ if __name__ == '__main__':
     p_list, source_list, target_list = load_json(r'preprocessed_data.json')
     netprop = NLPropagation(p_list, source_list, target_list)
     output = netprop.run()
-    store_json(r'non-linear-low-alpha.json', output)
+    store_json(r'non-linear-standard.json', output)
     print(output)
